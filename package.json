@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@uniswap/sdk-core": "^7.10.1",
+    "@uniswap/v3-sdk": "^3.27.0",
+    "@uniswap/v4-sdk": "^1.25.5",
+    "big.js": "^7.0.1",
+    "ethers": "^6.16.0",
+    "jsbi": "^4.3.2",
+    "ts-node": "^1.7.1",
+    "viem": "^2.44.0"
+  },
+  "devDependencies": {
+    "@wagmi/cli": "^2.8.0"
+  }
+}
