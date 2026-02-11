@@ -8,7 +8,7 @@
     "ethers": "^6.16.0",
     "jsbi": "^4.3.2",
     "ts-node": "^1.7.1",
-    "viem": "^2.44.0"
+    "viem": "^2.44.4"
   },
   "devDependencies": {
     "@wagmi/cli": "^2.8.0"

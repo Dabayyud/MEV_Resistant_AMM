@@ -72,7 +72,7 @@ contract MEVProtection {
      * @param commitHash The users off-chain calculated commitment Hash
      */
 
-    function commitTrade(address tokenIn, address tokenOut, bytes32 commitHash) external payable returns (bytes32 CommitmentID) {
+    function commitTrade(address user, address tokenIn, address tokenOut, bytes32 commitHash) external payable returns (bytes32 CommitmentID) {
 
         if (msg.value != commitDeposit) {
             revert InsufficientCommitDeposit(commitDeposit);
@@ -84,18 +84,18 @@ contract MEVProtection {
 
         usedCommitHash[commitHash] = true;
 
-        bytes32 commitmentID = keccak256(abi.encodePacked(msg.sender, commitHash, block.number));
+        bytes32 commitmentID = keccak256(abi.encodePacked(user, commitHash, block.number));
 
         commitments[commitmentID] = Commitment({
             commitmentHash: commitHash,
-            user: msg.sender,
+            user: user,
             tokenIn: tokenIn,
             tokenOut: tokenOut,
             commitBlock: block.number,
             revealed: false
         });
 
-        emit TradeCommitted(commitmentID, msg.sender, tokenIn, tokenOut, block.number);
+        emit TradeCommitted(commitmentID, user, tokenIn, tokenOut, block.number);
         return commitmentID;
     }
     /**
@@ -106,14 +106,14 @@ contract MEVProtection {
      * @param nonce The users choice of a nonce for extra-security
      */
 
-    function revealTrade(bytes32 commitmentID, uint256 amountIn, uint256 minAmountOut, bytes32 nonce) external {
+    function revealTrade(address user, bytes32 commitmentID, uint256 amountIn, uint256 minAmountOut, bytes32 nonce) external returns (bool) {
        Commitment storage commitment = commitments[commitmentID];
 
        if (commitment.user == address(0)) {
         revert CommitmentNotFound(commitmentID);
        }
 
-       if (commitment.user != msg.sender) {
+       if (commitment.user != user) {
         revert CommitmentUserNotFound(commitmentID);
        }
 
@@ -129,7 +129,7 @@ contract MEVProtection {
         revert CommitmentExpired(block.number);
        }
 
-       bytes32 expectedHash = keccak256(abi.encodePacked(msg.sender, amountIn, minAmountOut, commitment.tokenIn, commitment.tokenOut, nonce));
+       bytes32 expectedHash = keccak256(abi.encodePacked(user, amountIn, minAmountOut, commitment.tokenIn, commitment.tokenOut, nonce));
        bytes32 commitHash = commitment.commitmentHash;
 
        if (expectedHash != commitHash) {
@@ -138,20 +138,21 @@ contract MEVProtection {
 
        commitment.revealed = true;
        usedCommitHash[commitHash] = false;
-       commitDeposits[msg.sender] += commitDeposit;
+       commitDeposits[user] += commitDeposit;
        
-       emit TradeRevealed(commitmentID, msg.sender, amountIn, minAmountOut);
+       emit TradeRevealed(commitmentID, user, amountIn, minAmountOut);
+       return true;
     }
 
-    function claimDeposit() external {
+    function claimDeposit(address user) external {
 
-        if (commitDeposits[msg.sender] == 0) {
+        if (commitDeposits[user] == 0) {
             revert NoDepositToClaim();
         }
 
-        uint256 deposit  = commitDeposits[msg.sender];
-        commitDeposits[msg.sender] = 0;
-        Address.sendValue(payable(msg.sender), deposit);
+        uint256 deposit  = commitDeposits[user];
+        commitDeposits[user] = 0;
+        Address.sendValue(payable(user), deposit);
         
     }
 
@@ -165,8 +166,8 @@ contract MEVProtection {
         return commitments[id];
     }
 
-    function getCommitDepositValue() external view returns (uint256) {
-        return commitDeposits[msg.sender];
+    function getCommitDepositValue(address user) external view returns (uint256) {
+        return commitDeposits[user];
     }
 
     function getSumOfAllDeposits() external view returns (uint256) {

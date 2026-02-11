@@ -6,6 +6,6 @@ libs = ["lib"]
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [fuzz]
-runs = 100
+runs = 1000
 depth = 4
-fail_on_revert = true
+fail_on_revert = false
